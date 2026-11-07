@@ -19,15 +19,15 @@
 
 | 場所 | 内容 | GitHubに公開？ |
 |---|---|---|
-| \`docs/index.html\`, \`docs/app.js\`, \`docs/styles.css\` | 実験サイト | はい |
-| \`docs/lib/experiment.mjs\` | ランダム化・回答検証 | はい |
-| \`docs/config.js\` | 受信先の公開URL設定 | はい |
-| \`docs/conditions.json\` | 匿名化した刺激IDと音声ファイル名 | はい |
-| \`docs/audio/*.wav\` | 実験音声9本 | **権利確認後のみ** |
-| \`gas/Code.gs\` | 新しい回答受信プログラム | コードは公開可 |
-| \`tests/\` | 動作チェック | はい |
-| \`scripts/export_responses.py\` | 集計用CSV変換 | はい |
-| \`EmoSpherepp_PRIVATE_STIMULUS_KEY.csv\` | 刺激ID→r値の対応表 | **絶対に公開しない** |
+| `docs/index.html`, `docs/app.js`, `docs/styles.css` | 実験サイト | はい |
+| `docs/lib/experiment.mjs` | ランダム化・回答検証 | はい |
+| `docs/config.js` | 受信先の公開URL設定 | はい |
+| `docs/conditions.json` | 匿名化した刺激IDと音声ファイル名 | はい |
+| `docs/audio/*.wav` | 実験音声9本 | **権利確認後のみ** |
+| `gas/Code.gs` | 新しい回答受信プログラム | コードは公開可 |
+| `tests/` | 動作チェック | はい |
+| `scripts/export_responses.py` | 集計用CSV変換 | はい |
+| `EmoSpherepp_PRIVATE_STIMULUS_KEY.csv` | 刺激ID→r値の対応表 | **絶対に公開しない** |
 
 ## 公開する前に必ず確認
 
@@ -43,7 +43,7 @@ GitHubで **Daimaooooo/EmoSpherepp-ListeningTest** という新規リポジト�
 
 手元でGitが使える場合の例：
 
-\`\`\`bash
+```bash
 cd EmoSpherepp-ListeningTest
 git init
 git add README.md .gitignore docs gas tests scripts
@@ -51,22 +51,22 @@ git commit -m "Add randomized listening experiment pilot"
 git branch -M main
 git remote add origin https://github.com/Daimaooooo/EmoSpherepp-ListeningTest.git
 git push -u origin main
-\`\`\`
+```
 
 ZIPから展開する場合は、ZIP自体でなく**中身**をリポジトリのルートへ置いてください。
 
 ## 2. 回答の保存先を新しく設定する
 
-1. Google Sheetsで**新しいスプレッドシート**を作り、URLの \`/d/\` と \`/edit\` の間のIDを控えます。
-2. Google Apps Scriptで**新しいプロジェクト**を作り、\`gas/Code.gs\` の中身を貼ります。
-3. Apps Scriptの「プロジェクトの設定」→「スクリプト プロパティ」で \`SPREADSHEET_ID\` を作り、値を新しいシートIDにします。
+1. Google Sheetsで**新しいスプレッドシート**を作り、URLの `/d/` と `/edit` の間のIDを控えます。
+2. Google Apps Scriptで**新しいプロジェクト**を作り、`gas/Code.gs` の中身を貼ります。
+3. Apps Scriptの「プロジェクトの設定」→「スクリプト プロパティ」で `SPREADSHEET_ID` を作り、値を新しいシートIDにします。
 4. 「デプロイ」→「新しいデプロイ」→「ウェブアプリ」を選択。**次のユーザーとして実行：自分**、**アクセスできるユーザー：全員**。研究担当者が権限表示を確認し、許可します。
-5. ウェブアプリURLの \`https://script.google.com/macros/s/.../exec\` を \`docs/config.js\` の \`gasEndpoint\` に設定します。
-6. テスト送信して \`Submissions\` シートに1回答=1行で保存されることを確認。失敗時はApps Scriptの「実行数」ログを確認。
+5. ウェブアプリURLの `https://script.google.com/macros/s/.../exec` を `docs/config.js` の `gasEndpoint` に設定します。
+6. テスト送信して `Submissions` シートに1回答=1行で保存されることを確認。失敗時はApps Scriptの「実行数」ログを確認。
 
 **注意**：受信先は意図的に未設定です。現状では確認モードで動き、実回答はGoogle Sheetsに送られません。卒研当時の受信先URLを流用しないでください。
 
-送信はフォームPOSTと非表示iframeを使い、受信側の保存完了メッセージをチェックします。通信が途切れた際は「保存されたか不明」と表示し、同じ \`submission_id\` で再試行します。受信側で重複IDの二重保存を防ぎます。
+送信はフォームPOSTと非表示iframeを使い、受信側の保存完了メッセージをチェックします。通信が途切れた際は「保存されたか不明」と表示し、同じ `submission_id` で再試行します。受信側で重複IDの二重保存を防ぎます。
 
 ## 3. GitHub Pagesを有効化する
 
@@ -74,7 +74,7 @@ GitHubの新しいリポジトリの **Settings → Pages** で、Sourceを **De
 
 ページURL（公開後）：
 
-\`https://daimaooooo.github.io/EmoSpherepp-ListeningTest/\`
+`https://daimaooooo.github.io/EmoSpherepp-ListeningTest/`
 
 公開サイトでテスト回答し、Google Sheets側の受信行を確認してから参加者にURLを送ってください。URLはリポジトリのPages設定画面でも確認できます。
 
@@ -82,33 +82,33 @@ GitHubの新しいリポジトリの **Settings → Pages** で、Sourceを **De
 
 Node.js と Python 3 があれば追加ライブラリなしで確認できます。
 
-\`\`\`bash
+```bash
 node --test tests/experiment.test.mjs
 python3 tests/check_assets.py
 python3 -m http.server 8000 --directory docs
-\`\`\`
+```
 
-ブラウザで \`http://localhost:8000/\` を開きます。 \`file://\` で \`index.html\` を直接開くと、通常 \`conditions.json\` の取得が拒否されます。
+ブラウザで `http://localhost:8000/` を開きます。 `file://` で `index.html` を直接開くと、通常 `conditions.json` の取得が拒否されます。
 
 ## 5. 回答データを分析用に変換する
 
-Google Sheetsの \`Submissions\` タブを **CSV** としてエクスポートし、次を実行：
+Google Sheetsの `Submissions` タブを **CSV** としてエクスポートし、次を実行：
 
-\`\`\`bash
+```bash
 python3 scripts/export_responses.py submissions.csv trials.csv
-\`\`\`
+```
 
 結果は1行=1試行（参加者あたり9行）になります。
 
 r値の対応を加える場合は、公開リポジトリに入れずに保管している**私用の対応表**を指定します：
 
-\`\`\`bash
+```bash
 python3 scripts/export_responses.py submissions.csv trials.csv --key /private/path/EmoSpherepp_PRIVATE_STIMULUS_KEY.csv
-\`\`\`
+```
 
 ## 統計分析上の注意
 
-同じ参加者が全9条件を評価する**反復測定**です。条件ごとの平均と信頼区間に加えて、参加者内の対応を考慮したモデル（例：被験者をランダム効果とする混合効果モデル）を検討してください。順序効果を調べられるように \`trial_index\` も保存しています。自然さとのトレードオフも別途確認できます。
+同じ参加者が全9条件を評価する**反復測定**です。条件ごとの平均と信頼区間に加えて、参加者内の対応を考慮したモデル（例：被験者をランダム効果とする混合効果モデル）を検討してください。順序効果を調べられるように `trial_index` も保存しています。自然さとのトレードオフも別途確認できます。
 
 ## 使用技術
 

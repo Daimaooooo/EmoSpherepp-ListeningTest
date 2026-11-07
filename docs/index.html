@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="EmoSphere++の感情強度に関する予備聴取実験">
+  <title>音声主観評価実験 | EmoSphere++</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./config.js" defer></script>
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">◉</span> Speech Perception Study</div>
+      <p class="eyebrow">EmoSphere++ / Pilot Study</p>
+      <h1>音声の感情表現に関する聴取実験</h1>
+      <p class="header-sub">9種類の合成音声を聴き、声から感じる印象を評価してください。</p>
+    </header>
+
+    <main class="content">
+      <noscript><p class="notice error">この実験にはJavaScriptが必要です。有効にして再読み込みしてください。</p></noscript>
+      <p id="systemNotice" class="notice" hidden role="status"></p>
+
+      <section id="intro" class="panel">
+        <div class="section-heading"><span class="step">01</span><h2>実験のご案内</h2></div>
+        <p>この調査は、合成音声で表現される「喜び」の強さと、音声の自然さを調べるための予備実験です。所要時間は約5分です。</p>
+        <ul class="guide">
+          <li>なるべく静かな場所で、ヘッドホン・イヤホンをご使用ください。</li>
+          <li>9本の短い音声が、参加者ごとに異なる順番で提示されます。</li>
+          <li>各音声は最大2回まで再生できます。最後まで1回聴いてから評価してください。</li>
+          <li>途中で画面を閉じても、このブラウザには進捗が一時保存されます。</li>
+        </ul>
+        <div class="privacy">
+          <h3>参加にあたって</h3>
+          <p>参加は任意です。氏名やメールアドレスは収集しません。回答には自動生成した匿名ID、評価値、再生回数、回答時間、選択した再生機器の種類を記録します。回答は研究目的で集計します。送信前なら参加を中断できます。</p>
+          <p class="small">公開実験の開始前に、担当研究者が音声公開条件と学内の研究倫理手続きを確認してください。</p>
+        </div>
+        <form id="startForm">
+          <label class="field-label" for="device">主に使用する再生機器</label>
+          <select id="device" required>
+            <option value="">選択してください</option>
+            <option value="headphones">ヘッドホン・イヤホン</option>
+            <option value="speakers">スピーカー</option>
+            <option value="other">その他</option>
+          </select>
+          <label class="field-label" for="ttsExperience">合成音声を普段から聴きますか？</label>
+          <select id="ttsExperience" required>
+            <option value="">選択してください</option>
+            <option value="often">よく聴く</option>
+            <option value="sometimes">ときどき聴く</option>
+            <option value="rarely">ほとんど聴かない</option>
+          </select>
+          <label class="consent">
+            <input id="consent" type="checkbox" required>
+            <span>実験の説明を読み、匿名の回答が研究目的で利用されることに同意して参加します。</span>
+          </label>
+          <div id="resumePanel" class="resume" hidden>
+            <p>前回の途中データが見つかりました。</p>
+            <button type="button" id="resumeBtn" class="secondary">前回の続きから再開</button>
+            <button type="button" id="resetBtn" class="text-button">最初からやり直す</button>
+          </div>
+          <button type="submit" id="startBtn" class="primary">実験を開始する <span aria-hidden="true">→</span></button>
+        </form>
+      </section>
+
+      <section id="trialScreen" class="panel" hidden>
+        <div class="trial-top">
+          <div class="section-heading"><span class="step">02</span><h2>音声の評価</h2></div>
+          <span id="progressLabel" class="progress-label">1 / 9</span>
+        </div>
+        <div id="progressTrack" class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="9" aria-valuenow="0" aria-label="実験の進捗">
+          <div id="progressFill" class="progress-fill"></div>
+        </div>
+
+        <div class="audio-card">
+          <div class="sound-icon" aria-hidden="true">
+            <svg viewBox="0 0 48 48" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <path d="M11 19v10h8l9 7V12l-9 7z"/><path d="M34 17c4 3 4 11 0 14"/><path d="M38 12c7 7 7 17 0 24"/>
+            </svg>
+          </div>
+          <p class="audio-title">次の英語音声を聴いてください</p>
+          <p id="sentence" class="sentence" lang="en"></p>
+          <audio id="player" preload="none"></audio>
+          <button id="playBtn" type="button" class="primary play-button">▶ 音声を再生</button>
+          <p id="playInfo" class="small" aria-live="polite"></p>
+        </div>
+
+        <form id="ratingForm" class="rating-form">
+          <fieldset>
+            <legend><span class="question-number">Q1</span> この音声から、どの程度「喜び」を感じますか？</legend>
+            <div id="joyScale" class="scale" role="radiogroup" aria-label="喜びの強さ"></div>
+            <div class="scale-anchors"><span>1：まったく感じない</span><span>7：非常に強く感じる</span></div>
+          </fieldset>
+          <fieldset>
+            <legend><span class="question-number">Q2</span> この音声は、どの程度自然に聞こえますか？</legend>
+            <div id="naturalScale" class="scale" role="radiogroup" aria-label="音声の自然さ"></div>
+            <div class="scale-anchors"><span>1：非常に不自然</span><span>5：非常に自然</span></div>
+          </fieldset>
+          <p id="trialError" class="notice error" hidden role="alert"></p>
+          <button type="submit" id="nextBtn" class="primary" disabled>評価して次へ <span aria-hidden="true">→</span></button>
+        </form>
+      </section>
+
+      <section id="finish" class="panel" hidden>
+        <div class="section-heading"><span class="step">03</span><h2>実験終了</h2></div>
+        <p>9本すべての評価が終わりました。ご協力ありがとうございます！</p>
+        <p class="small">匿名参加者ID：<code id="participantId"></code></p>
+        <p id="submissionStatus" class="notice" role="status" aria-live="polite"></p>
+        <div class="actions">
+          <button type="button" id="submitBtn" class="primary">回答を送信する</button>
+          <button type="button" id="csvBtn" class="secondary">回答CSVを保存する</button>
+          <button type="button" id="clearBtn" class="text-button">この端末の回答データを削除</button>
+        </div>
+        <p class="small">送信できない場合は、CSVを保存して研究担当者へお渡しください。送信結果を確認できない場合も、同じ回答IDで安全に再試行できます。</p>
+      </section>
+    </main>
+
+    <footer>EmoSphere++ Emotion Intensity Study · 研究目的の予備実験</footer>
+  </div>
+</body>
+</html>

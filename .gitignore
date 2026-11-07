@@ -1,0 +1,8 @@
+# Keep generated analyses, participant exports and the blind key out of Pages.
+PRIVATE_*
+private/
+*.sqlite
+*.db
+responses/
+__pycache__/
+.DS_Store
