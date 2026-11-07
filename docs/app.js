@@ -343,6 +343,19 @@ async function initialize() {
     if (!response.ok) throw new Error("刺激リストを取得できませんでした。");
     conditions = validateConditions(await response.json());
     conditionById = new Map(conditions.map((c) => [c.id, c]));
+    // A public source-only staging deploy must not start a survey with
+    // missing WAV assets. GitHub Pages exposes every deployed file publicly.
+    const checks = await Promise.all(conditions.map(async (item) => {
+      try {
+        const result = await fetch("./" + item.audio, { method: "HEAD", cache: "no-store" });
+        return result.ok;
+      } catch {
+        return false;
+      }
+    }));
+    if (checks.some((ok) => !ok)) {
+      throw new Error("音声ファイルの公開準備中です。現在は実験に参加できません。");
+    }
   } catch (error) {
     notice("実験を開始できません：" + error.message, true);
     $("startBtn").disabled = true;
