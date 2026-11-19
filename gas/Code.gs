@@ -9,7 +9,7 @@
  * submission_id de-duplication atomic at the row level.
  */
 
-const STUDY_ID = "emospherepp-r-intensity-pilot-v1";
+const STUDY_ID = "emospherepp-r-intensity-pilot-v2-online";
 const TAB_NAME = "Submissions";
 const IDS = ["Q7M2A", "N4K9P", "X2V8R", "T6H3W", "L8D5C", "B3F7J", "M9R4S", "H5Z2N", "P2Y6T"];
 const HEADER = [
@@ -24,14 +24,15 @@ function doGet() {
   );
 }
 
-function reply_(submissionId, ok) {
+function reply_(submissionId, responseToken, ok) {
   const message = JSON.stringify({
     type: "EMOSPHERE_GAS_ACK",
     submissionId: submissionId || "",
+    responseToken: responseToken || "",
     ok: Boolean(ok)
   }).replace(/</g, "\\u003c");
   const html = "<!doctype html><html><head><meta charset='utf-8'></head><body>" +
-    "<script>window.parent.postMessage(" + message + ", '*');</script>" +
+    "<script>window.top.postMessage(" + message + ", 'https://daimaooooo.github.io');</script>" +
     "<p>Response processed.</p></body></html>";
   return HtmlService.createHtmlOutput(html)
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
@@ -46,6 +47,11 @@ function assertPayload_(p) {
   if (!p || p.studyId !== STUDY_ID) throw new Error("Invalid study");
   if (!/^S-[0-9a-f-]{36}$/.test(p.submissionId || "")) throw new Error("Invalid submission ID");
   if (!/^P-[0-9a-f-]{36}$/.test(p.participantId || "")) throw new Error("Invalid participant ID");
+  if (!/^[0-9a-f-]{36}$/.test(p.responseToken || "")) throw new Error("Invalid response token");
+  for (const value of [p.startedAt, p.completedAt]) {
+    if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value) || !Number.isFinite(Date.parse(value))) throw new Error("Invalid timestamp");
+  }
+  if (Date.parse(p.startedAt) > Date.parse(p.completedAt)) throw new Error("Invalid timestamp order");
   if (!p.setup || !["headphones", "speakers", "other"].includes(p.setup.device)) {
     throw new Error("Invalid device");
   }
@@ -63,7 +69,7 @@ function assertPayload_(p) {
   p.responses.forEach(function (r, i) {
     if (r.stimulusId !== p.order[i] || seen.has(r.stimulusId) ||
       !integerBetween_(r.trialIndex, 1, 9) || r.trialIndex !== i + 1 ||
-      !integerBetween_(r.joy, 1, 7) || !integerBetween_(r.naturalness, 1, 5) ||
+      !integerBetween_(r.joy, 1, 5) || !integerBetween_(r.naturalness, 1, 5) ||
       !integerBetween_(r.playCount, 1, 2) ||
       !integerBetween_(r.playAttempts, r.playCount, 2) ||
       typeof r.rtMs !== "number" || !Number.isFinite(r.rtMs) ||
@@ -91,12 +97,16 @@ function sheet_() {
 
 function doPost(e) {
   let submissionId = "";
+  let responseToken = "";
   let lock;
   try {
     const payloadText = e && e.parameter && e.parameter.payload;
     if (typeof payloadText !== "string") throw new Error("Missing payload");
-    const p = assertPayload_(JSON.parse(payloadText));
-    submissionId = p.submissionId;
+    if (payloadText.length > 30000) throw new Error("Payload too large");
+    const raw = JSON.parse(payloadText);
+    submissionId = typeof raw.submissionId === "string" ? raw.submissionId : "";
+    responseToken = typeof raw.responseToken === "string" ? raw.responseToken : "";
+    const p = assertPayload_(raw);
     lock = LockService.getScriptLock();
     lock.waitLock(15000);
     const sheet = sheet_();
@@ -120,10 +130,10 @@ function doPost(e) {
       ]);
       SpreadsheetApp.flush();
     }
-    return reply_(submissionId, true);
+    return reply_(submissionId, responseToken, true);
   } catch (error) {
     console.error("Submission failed:", String(error));
-    return reply_(submissionId, false);
+    return reply_(submissionId, responseToken, false);
   } finally {
     if (lock && lock.hasLock()) lock.releaseLock();
   }
