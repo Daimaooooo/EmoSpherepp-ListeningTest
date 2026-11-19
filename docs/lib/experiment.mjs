@@ -1,5 +1,5 @@
-export const STUDY_ID = "emospherepp-r-intensity-pilot-v1";
-export const STORAGE_KEY = "emospherepp-pilot-v1-session";
+export const STUDY_ID = "emospherepp-r-intensity-pilot-v2-online";
+export const STORAGE_KEY = "emospherepp-pilot-v2-online-session";
 export const MAX_PLAYS = 2;
 export const EXPECTED_TRIALS = 9;
 
@@ -75,7 +75,7 @@ export function validSession(session, conditions) {
 }
 
 export function validRating(joy, naturalness) {
-  return Number.isInteger(joy) && joy >= 1 && joy <= 7 &&
+  return Number.isInteger(joy) && joy >= 1 && joy <= 5 &&
     Number.isInteger(naturalness) && naturalness >= 1 && naturalness <= 5;
 }
 
