@@ -7,7 +7,7 @@ from pathlib import Path
 
 FIELDS = [
     "study_id", "participant_id", "submission_id", "received_at",
-    "started_at", "completed_at", "device", "tts_experience",
+    "started_at", "completed_at", "device", "tts_experience", "age", "gender", "consent",
     "trial_index", "stimulus_id", "rating_joy", "rating_naturalness",
     "play_count", "play_attempts", "rt_ms"
 ]
@@ -16,6 +16,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("input", type=Path, help="Submissions sheet exported as CSV")
     parser.add_argument("output", type=Path, help="Long-form 9 trials per participant")
+    parser.add_argument("--include-names", action="store_true", help="Include identifiable names; keep output private")
     parser.add_argument("--key", type=Path, help="Private ID to r mapping, NOT FOR PUBLIC GITHUB")
     args = parser.parse_args()
 
@@ -50,6 +51,9 @@ def main():
                     "completed_at": source["completed_at"],
                     "device": source["device"],
                     "tts_experience": source["tts_experience"],
+                    "age": source.get("age", ""),
+                    "gender": source.get("gender", ""),
+                    "consent": source.get("consent", ""),
                     "trial_index": trial["trialIndex"],
                     "stimulus_id": trial["stimulusId"],
                     "rating_joy": trial["joy"],
@@ -58,13 +62,16 @@ def main():
                     "play_attempts": trial["playAttempts"],
                     "rt_ms": trial["rtMs"],
                 }
+                if args.include_names:
+                    name = source.get("participant_name", "")
+                    row["participant_name"] = "\'" + name if name.startswith(("=", "+", "-", "@")) else name
                 if args.key:
                     if trial["stimulusId"] not in key:
                         raise ValueError(f"Missing key for stimulus {trial['stimulusId']}")
                     row["radius_r"] = key[trial["stimulusId"]]
                 result.append(row)
 
-    fields = FIELDS + (["radius_r"] if args.key else [])
+    fields = FIELDS + (["participant_name"] if args.include_names else []) + (["radius_r"] if args.key else [])
     with args.output.open("w", newline="", encoding="utf-8-sig") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields)
         writer.writeheader()
