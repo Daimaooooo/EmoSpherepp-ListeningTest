@@ -1,7 +1,7 @@
 // Set the NEW Apps Script /exec URL after deploying gas/Code.gs.
 // Do not reuse the graduation research spreadsheet endpoint.
 window.EXPERIMENT_CONFIG = {
-  studyOpen: false, // Set true only after checking consent, audio rights and receiver.
-  gasEndpoint: "",
+  studyOpen: true, // Enabled for preflight testing; share only after successful test.
+  gasEndpoint: "https://script.google.com/macros/s/AKfycbxJU9_UVh4SZ0MAAcyS6-l8ZhXq6Hr2xm72iyB6xQYpNFmOfX23i1-cBIEKNBZd0HFb8A/exec",
   requireHeadphones: false
 };
