@@ -1,5 +1,5 @@
-export const STUDY_ID = "emospherepp-r-intensity-pilot-v2-online";
-export const STORAGE_KEY = "emospherepp-pilot-v2-online-session";
+export const STUDY_ID = "emospherepp-r-intensity-pilot-v3-online";
+export const STORAGE_KEY = "emospherepp-pilot-v3-online-session";
 export const MAX_PLAYS = 2;
 export const EXPECTED_TRIALS = 9;
 
@@ -64,7 +64,7 @@ export function secureRandom() {
 }
 
 export function validSession(session, conditions) {
-  if (!session || session.studyId !== STUDY_ID || !Array.isArray(session.order)) return false;
+  if (!session || session.studyId !== STUDY_ID || !Array.isArray(session.order) || session.setup?.consent !== true) return false;
   if (session.order.length !== EXPECTED_TRIALS || new Set(session.order).size !== EXPECTED_TRIALS) return false;
   const expected = new Set(conditions.map((c) => c.id));
   if (!session.order.every((id) => expected.has(id))) return false;
@@ -89,4 +89,11 @@ export function validResponseList(responses) {
     ids.add(r.stimulusId);
   }
   return true;
+}
+
+export function validParticipantInfo(info) {
+  return !!info && typeof info.name === "string" && info.name === info.name.trim() &&
+    info.name.length >= 1 && info.name.length <= 100 && !/[\x00-\x1f\x7f]/.test(info.name) &&
+    Number.isInteger(info.age) && info.age >= 18 && info.age <= 120 &&
+    ["male", "female", "other", "prefer_not_to_say"].includes(info.gender);
 }
