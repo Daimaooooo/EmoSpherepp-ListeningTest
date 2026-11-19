@@ -87,7 +87,13 @@ function updatePlayUI() {
       : "再生上限に達しました";
   $("playInfo").textContent =
     "最後まで再生：" + completed() + "回 / 再生開始：" + attempts() + "回（上限2回）";
-  $("nextBtn").disabled = completed() < 1;
+  const canRate = completed() >= 1 && !audioBusy;
+  for (const fieldset of $("ratingForm").querySelectorAll("fieldset")) fieldset.disabled = !canRate;
+  $("nextBtn").disabled = !canRate || !validRating(Number(new FormData($("ratingForm")).get("joy")), Number(new FormData($("ratingForm")).get("naturalness")));
+  if (remaining <= 0 && completed() === 0 && !audioBusy) {
+    $("trialError").textContent = "再生が中断され、完聴できませんでした。最初の画面に再読み込みし、最初からやり直してください。";
+    $("trialError").hidden = false;
+  }
 }
 
 function renderTrial() {
@@ -130,6 +136,7 @@ async function playCurrent() {
   try {
     await player.play();
   } catch {
+    if (!audioBusy || currentId() !== id) return;
     session.attempts[id] = Math.max(0, (session.attempts[id] || 1) - 1);
     audioBusy = false;
     persist();
@@ -141,7 +148,7 @@ async function playCurrent() {
 
 function recordRating(event) {
   event.preventDefault();
-  if (!session || completed() < 1) return;
+  if (!session || audioBusy || completed() < 1) return;
   const joy = Number(new FormData($("ratingForm")).get("joy"));
   const naturalness = Number(new FormData($("ratingForm")).get("naturalness"));
   if (!validRating(joy, naturalness)) {
@@ -201,7 +208,8 @@ function submitToGAS(url, payload) {
     const input = document.createElement("input");
     input.type = "hidden";
     input.name = "payload";
-    input.value = JSON.stringify(payload);
+    const responseToken = crypto.randomUUID();
+    input.value = JSON.stringify({...payload, responseToken});
     form.append(input);
     document.body.append(frame, form);
 
@@ -213,10 +221,10 @@ function submitToGAS(url, payload) {
       frame.remove();
     };
     const onMessage = (event) => {
-      if (event.source !== frame.contentWindow || !isGASOrigin(event.origin)) return;
+      if (!isGASOrigin(event.origin)) return;
       const data = event.data;
       if (!data || data.type !== "EMOSPHERE_GAS_ACK" ||
-        data.submissionId !== payload.submissionId) return;
+        data.submissionId !== payload.submissionId || data.responseToken !== responseToken) return;
       cleanup();
       if (data.ok === true) resolve(data);
       else reject(new Error("受信先で処理できませんでした。設定を確認してください。"));
@@ -336,9 +344,12 @@ function renderIntro() {
 }
 
 async function initialize() {
-  initScale("joyScale", "joy", 7);
+  initScale("joyScale", "joy", 5);
   initScale("naturalScale", "naturalness", 5);
   try {
+    if (config.studyOpen !== true || !isValidGAS(config.gasEndpoint)) {
+      throw new Error("現在は実験の公開準備中です。");
+    }
     const response = await fetch("./conditions.json", { cache: "no-store" });
     if (!response.ok) throw new Error("刺激リストを取得できませんでした。");
     conditions = validateConditions(await response.json());
@@ -418,6 +429,7 @@ async function initialize() {
     $("trialError").textContent = "音声の読み込みに失敗しました。通信状態をご確認のうえ再試行してください。";
     $("trialError").hidden = false;
   });
+  $("ratingForm").addEventListener("change", updatePlayUI);
   $("ratingForm").addEventListener("submit", recordRating);
   $("submitBtn").addEventListener("click", submitResponses);
   $("csvBtn").addEventListener("click", downloadCSV);
