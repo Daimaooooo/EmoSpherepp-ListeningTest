@@ -1,6 +1,6 @@
 import {
   STUDY_ID, STORAGE_KEY, MAX_PLAYS, EXPECTED_TRIALS,
-  validateConditions, makeSession, validSession, validRating, validResponseList
+  validateConditions, makeSession, validSession, validRating, validResponseList, validParticipantInfo
 } from "./lib/experiment.mjs";
 
 const $ = (id) => document.getElementById(id);
@@ -263,12 +263,24 @@ function renderFinish() {
     !isValidGAS(config.gasEndpoint);
 }
 
+function participantInfo() {
+  const form = $("participantForm");
+  const info = { name: $("participantName").value.trim(), age: Number($("participantAge").value), gender: $("participantGender").value };
+  if (!form.reportValidity() || !validParticipantInfo(info)) {
+    setSubmissionStatus("氏名・年齢・性別の入力内容を確認してください。", true);
+    return null;
+  }
+  return info;
+}
+
 async function submitResponses() {
   if (!session || session.status === "submitted") return;
   if (!validResponseList(session.responses)) {
     setSubmissionStatus("回答件数または評価値に不整合があります。", true);
     return;
   }
+  const person = participantInfo();
+  if (!person) return;
   const button = $("submitBtn");
   button.disabled = true;
   setSubmissionStatus("回答を送信し、受信確認を待っています…");
@@ -279,6 +291,7 @@ async function submitResponses() {
     startedAt: session.startedAt,
     completedAt: session.completedAt,
     setup: session.setup,
+    participantInfo: person,
     order: session.order,
     responses: session.responses
   };
@@ -305,8 +318,10 @@ function csvCell(value) {
 
 function downloadCSV() {
   if (!session || !validResponseList(session.responses)) return;
+  const person = participantInfo();
+  if (!person) return;
   const columns = [
-    "study_id", "participant_id", "submission_id", "trial_index",
+    "study_id", "participant_id", "submission_id", "participant_name", "age", "gender", "consent", "trial_index",
     "stimulus_id", "rating_joy", "rating_naturalness",
     "play_count", "play_attempts", "rt_ms", "device", "tts_experience"
   ];
@@ -314,6 +329,7 @@ function downloadCSV() {
   for (const r of session.responses) {
     const fields = [
       STUDY_ID, session.participantId, session.submissionId,
+      person.name, person.age, person.gender, session.setup.consent,
       r.trialIndex, r.stimulusId, r.joy, r.naturalness, r.playCount,
       r.playAttempts, r.rtMs, session.setup.device, session.setup.ttsExperience
     ];
@@ -382,14 +398,14 @@ async function initialize() {
 
   $("startForm").addEventListener("submit", (event) => {
     event.preventDefault();
-    if (session) return;
+    if (session || !$("consent").checked) return;
     if (config.requireHeadphones && $("device").value !== "headphones") {
       notice("この実験ではヘッドホン・イヤホンを選択してください。", true);
       return;
     }
     session = makeSession(
       conditions,
-      { device: $("device").value, ttsExperience: $("ttsExperience").value },
+      { device: $("device").value, ttsExperience: $("ttsExperience").value, consent: $("consent").checked },
       () => crypto.randomUUID(),
       () => new Date().toISOString()
     );
@@ -431,6 +447,7 @@ async function initialize() {
   });
   $("ratingForm").addEventListener("change", updatePlayUI);
   $("ratingForm").addEventListener("submit", recordRating);
+  $("participantForm").addEventListener("submit", (event) => { event.preventDefault(); submitResponses(); });
   $("submitBtn").addEventListener("click", submitResponses);
   $("csvBtn").addEventListener("click", downloadCSV);
   $("clearBtn").addEventListener("click", () => {
