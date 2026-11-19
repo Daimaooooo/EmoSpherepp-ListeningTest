@@ -34,7 +34,7 @@
         </ul>
         <div class="privacy">
           <h3>参加にあたって</h3>
-          <p>参加は任意です。氏名やメールアドレスは収集しません。回答には自動生成した匿名ID、評価値、再生回数、回答時間、選択した再生機器の種類を記録します。回答は研究目的で集計します。送信前なら参加を中断できます。</p>
+          <p>本実験は18歳以上を対象とし、参加は任意です。最後に氏名・年齢・性別を入力していただきます（性別は回答しないこともできます）。氏名等は参加者IDに紐づけ、評価値、再生回数、回答時間、再生機器、合成音声の聴取経験とともに研究用スプレッドシートへ送信します。メールアドレスは入力不要です。個人が特定される情報を公開せず、研究目的で集計します。送信前なら参加を中断できます。</p>
           <p class="small">途中で参加を中止できます。研究担当者から案内された問い合わせ先・データの管理方法も確認してください。</p>
         </div>
         <form id="startForm">
@@ -54,7 +54,7 @@
           </select>
           <label class="consent">
             <input id="consent" type="checkbox" required>
-            <span>実験の説明を読み、匿名の回答が研究目的で利用されることに同意して参加します。</span>
+            <span>私は18歳以上であり、実験の説明を読み、氏名・年齢・性別および回答が研究目的で収集・利用されることに同意します。</span>
           </label>
           <div id="resumePanel" class="resume" hidden>
             <p>前回の途中データが見つかりました。</p>
@@ -106,7 +106,24 @@
       <section id="finish" class="panel" hidden>
         <div class="section-heading"><span class="step">03</span><h2>実験終了</h2></div>
         <p>9本すべての評価が終わりました。ご協力ありがとうございます！</p>
-        <p class="small">匿名参加者ID：<code id="participantId"></code></p>
+        <p class="small">参加者ID：<code id="participantId"></code></p>
+        <form id="participantForm" class="participant-form">
+          <h3>参加者情報</h3>
+          <p class="small">以下は研究担当者が回答を管理するための情報です。氏名・年齢・性別はブラウザの途中保存には含めません。</p>
+          <label class="field-label" for="participantName">氏名（必須）</label>
+          <input class="participant-input" id="participantName" type="text" maxlength="100" required autocomplete="off" placeholder="例：山田 太郎">
+          <label class="field-label" for="participantAge">年齢（満年齢・必須）</label>
+          <input class="participant-input" id="participantAge" type="number" min="18" max="120" step="1" required inputmode="numeric" autocomplete="off" placeholder="例：22">
+          <label class="field-label" for="participantGender">性別（選択必須）</label>
+          <select id="participantGender" required>
+            <option value="">選択してください</option>
+            <option value="male">男性</option>
+            <option value="female">女性</option>
+            <option value="other">その他</option>
+            <option value="prefer_not_to_say">回答しない</option>
+          </select>
+          <p class="small">CSVにも氏名等が含まれます。保存・提出時は取り扱いにご注意ください。</p>
+        </form>
         <p id="submissionStatus" class="notice" role="status" aria-live="polite"></p>
         <div class="actions">
           <button type="button" id="submitBtn" class="primary">回答を送信する</button>
