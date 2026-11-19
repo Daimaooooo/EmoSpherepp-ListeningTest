@@ -3,19 +3,20 @@
  *
  * Deploy as a NEW Web App. Do not point at the previous graduation experiment.
  * Set Script Property SPREADSHEET_ID to the ID of a NEW spreadsheet.
- * Execute as: Me. Access: Anyone (anonymous participants).
+ * Execute as: Me. Access: Anyone (participant information is stored privately in Sheets).
  *
  * This receiver stores one complete response per spreadsheet row, making
  * submission_id de-duplication atomic at the row level.
  */
 
-const STUDY_ID = "emospherepp-r-intensity-pilot-v2-online";
-const TAB_NAME = "Submissions";
+const STUDY_ID = "emospherepp-r-intensity-pilot-v3-online";
+const TAB_NAME = "Submissions_v3";
 const IDS = ["Q7M2A", "N4K9P", "X2V8R", "T6H3W", "L8D5C", "B3F7J", "M9R4S", "H5Z2N", "P2Y6T"];
 const HEADER = [
   "submission_id", "participant_id", "study_id", "received_at",
   "started_at", "completed_at", "device", "tts_experience",
-  "presentation_order_json", "responses_json"
+  "presentation_order_json", "responses_json",
+  "participant_name", "age", "gender", "consent"
 ];
 
 function doGet() {
@@ -58,6 +59,13 @@ function assertPayload_(p) {
   if (!["often", "sometimes", "rarely"].includes(p.setup.ttsExperience)) {
     throw new Error("Invalid familiarity");
   }
+  if (p.setup.consent !== true) throw new Error("Missing consent");
+  const person = p.participantInfo;
+  if (!person || typeof person.name !== "string" || person.name !== person.name.trim() ||
+      person.name.length < 1 || person.name.length > 100 || /[\x00-\x1f\x7f]/.test(person.name) ||
+      !integerBetween_(person.age, 18, 120) || !["male", "female", "other", "prefer_not_to_say"].includes(person.gender)) {
+    throw new Error("Invalid participant information");
+  }
   if (!Array.isArray(p.order) || p.order.length !== 9 ||
     new Set(p.order).size !== 9 || !IDS.every((id) => p.order.includes(id))) {
     throw new Error("Invalid order");
@@ -82,6 +90,11 @@ function assertPayload_(p) {
   return p;
 }
 
+// Prefix user text that spreadsheet software could interpret as a formula.
+function safeName_(name) {
+  return /^[=+\-@]/.test(name) ? "\u0027" + name : name;
+}
+
 function sheet_() {
   const id = PropertiesService.getScriptProperties().getProperty("SPREADSHEET_ID");
   if (!id) throw new Error("SPREADSHEET_ID not configured");
@@ -92,6 +105,8 @@ function sheet_() {
     sheet.appendRow(HEADER);
     sheet.setFrozenRows(1);
   }
+  const actual = sheet.getRange(1, 1, 1, HEADER.length).getValues()[0];
+  if (actual.some((v, i) => v !== HEADER[i])) throw new Error("Unexpected sheet schema");
   return sheet;
 }
 
@@ -126,7 +141,11 @@ function doPost(e) {
         p.setup.device,
         p.setup.ttsExperience,
         JSON.stringify(p.order),
-        JSON.stringify(p.responses)
+        JSON.stringify(p.responses),
+        safeName_(p.participantInfo.name),
+        p.participantInfo.age,
+        p.participantInfo.gender,
+        p.setup.consent
       ]);
       SpreadsheetApp.flush();
     }
