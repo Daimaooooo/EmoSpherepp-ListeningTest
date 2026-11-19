@@ -41,10 +41,12 @@ test("session has correct ID, order and progress", () => {
 
 test("rating boundaries and response completeness", () => {
   assert.ok(validRating(1, 1));
-  assert.ok(validRating(7, 5));
+  assert.ok(validRating(5, 5));
+  assert.ok(!validRating(6, 5));
+  assert.ok(!validRating(7, 5));
   assert.ok(!validRating(0, 1));
-  assert.ok(!validRating(7, 6));
-  assert.ok(!validRating("7", 5));
+  assert.ok(!validRating(5, 6));
+  assert.ok(!validRating("5", 5));
   const responses = conditions.map((c, i) => ({
     stimulusId: c.id,
     trialIndex: i + 1,
