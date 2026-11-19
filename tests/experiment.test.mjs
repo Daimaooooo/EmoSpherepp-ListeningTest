@@ -5,7 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   STUDY_ID, EXPECTED_TRIALS, MAX_PLAYS, shuffled,
-  validateConditions, makeSession, validSession, validRating, validResponseList
+  validateConditions, makeSession, validSession, validRating, validResponseList, validParticipantInfo
 } from "../docs/lib/experiment.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -27,7 +27,7 @@ test("shuffling preserves each condition once", () => {
 test("session has correct ID, order and progress", () => {
   const session = makeSession(
     conditions,
-    { device: "headphones", ttsExperience: "rarely" },
+    { device: "headphones", ttsExperience: "rarely", consent: true },
     () => "ffba0b9e-8789-4d16-b39f-7937eaf514d8",
     () => "2026-11-07T00:00:00.000Z"
   );
@@ -60,4 +60,14 @@ test("rating boundaries and response completeness", () => {
   responses[0].playCount = 1;
   responses[1].stimulusId = responses[0].stimulusId;
   assert.equal(validResponseList(responses), false);
+});
+
+test("participant information and consent", () => {
+  const info = { name: "テスト 太郎", age: 22, gender: "prefer_not_to_say" };
+  assert.ok(validParticipantInfo(info));
+  for (const bad of [{name:" "},{name:"a\n"},{age:17},{age:18.5},{age:121},{gender:""}]) assert.ok(!validParticipantInfo({...info,...bad}));
+  const s = makeSession(conditions,{device:"headphones",ttsExperience:"rarely",consent:true},()=>"test",()=>"2026-11-19T00:00:00.000Z");
+  assert.ok(validSession(s,conditions));
+  s.setup.consent=false;
+  assert.ok(!validSession(s,conditions));
 });
